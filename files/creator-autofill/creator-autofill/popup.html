@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creator Autofill</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #111214;
+      --surface:   #1C1E22;
+      --border:    #2A2C32;
+      --text:      #F0F0F2;
+      --muted:     #7A7C84;
+      --ig-grad:   linear-gradient(135deg, #E1306C 0%, #833AB4 100%);
+      --success:   #22C55E;
+      --error:     #EF4444;
+      --radius:    8px;
+    }
+
+    body {
+      width: 360px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--ig-grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo svg { display: block; }
+
+    .header-text h1 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .header-text p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 18px;
+      gap: 0;
+    }
+
+    .tab {
+      padding: 10px 0;
+      margin-right: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      user-select: none;
+    }
+
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: #E1306C;
+    }
+
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* ── Tab Panels ── */
+    .panel { display: none; padding: 16px 18px; }
+    .panel.active { display: block; }
+
+    /* ── Fields ── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      margin-top: 4px;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+
+    .field input:focus {
+      border-color: #833AB4;
+    }
+
+    .field input::placeholder { color: var(--muted); opacity: 0.6; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 14px 0;
+    }
+
+    /* ── Buttons ── */
+    .btn-save {
+      width: 100%;
+      padding: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      font-family: inherit;
+    }
+
+    .btn-save:hover { background: #25272D; border-color: #3E4047; }
+
+    /* ── CTA ── */
+    .cta-panel {
+      padding: 14px 18px 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-autofill {
+      width: 100%;
+      padding: 11px;
+      background: var(--ig-grad);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+      position: relative;
+      overflow: hidden;
+      transition: opacity 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+
+    .btn-autofill:hover { opacity: 0.9; }
+    .btn-autofill:active { transform: scale(0.99); }
+
+    .btn-autofill:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      display: none;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    .toast.success {
+      display: flex;
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .toast.error {
+      display: flex;
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* ── Status ── */
+    .status-hint {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* ── About tab ── */
+    .keyword-list {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-top: 6px;
+    }
+
+    .keyword-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+    }
+
+    .keyword-row:last-child { border-bottom: none; }
+
+    .kw-field {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      min-width: 80px;
+    }
+
+    .kw-words {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM8 5.5C9.38 5.5 10.5 6.62 10.5 8C10.5 9.38 9.38 10.5 8 10.5C6.62 10.5 5.5 9.38 5.5 8C5.5 6.62 6.62 5.5 8 5.5Z" fill="white"/>
+        <circle cx="11.5" cy="4.5" r="1" fill="white"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>Creator Autofill</h1>
+      <p>Brand collab forms, filled instantly</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="profile">Profile</button>
+    <button class="tab" data-tab="how">How it works</button>
+  </div>
+
+  <!-- Profile Tab -->
+  <div class="panel active" id="panel-profile">
+
+    <div class="section-label">Basic info</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Full Name</label>
+        <input id="f-name" type="text" placeholder="Your Name" />
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input id="f-phone" type="text" placeholder="+91 00000 00000" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <input id="f-email" type="email" placeholder="you@email.com" />
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Shipping address</div>
+
+    <div class="field">
+      <label>Full Address</label>
+      <input id="f-address" type="text" placeholder="Street, City, State, PIN" />
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Creator profile</div>
+
+    <div class="field">
+      <label>Instagram Profile Link</label>
+      <input id="f-instagram" type="text" placeholder="https://instagram.com/yourhandle" />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Follower Count</label>
+        <input id="f-followers" type="text" placeholder="20000" />
+      </div>
+      <div class="field">
+        <label>Content Niche</label>
+        <input id="f-niche" type="text" placeholder="Lifestyle & Beauty" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Media Kit Link</label>
+      <input id="f-mediakit" type="text" placeholder="https://drive.google.com/..." />
+    </div>
+
+    <button class="btn-save" id="btn-save">Save details</button>
+    <div id="save-toast" class="toast"></div>
+  </div>
+
+  <!-- How it works Tab -->
+  <div class="panel" id="panel-how">
+    <p style="color: var(--muted); font-size: 12px; line-height: 1.6; margin-bottom: 12px;">
+      The extension scans form labels for keywords and fills the matching field with your saved data. Here's what it looks for:
+    </p>
+    <div class="keyword-list">
+      <div class="keyword-row">
+        <span class="kw-field">Name</span>
+        <span class="kw-words">name, full name</span>
+      </div>
+      <div class="keyword-row">
+        <span class="kw-field">Email</span>
+        <span class="kw-words">email, e-mail</span>
+      </div>
+      <div class="keyword-row">
+        <span class="kw-field">Phone</span>
+        <span class="kw-words">phone, mobile, whatsapp</span>
+      </div>
+      <div class="keyword-row">
+        <span class="kw-field">Address</span>
+        <span class="kw-words">address, location, shipping, postal, deliver</span>
+      </div>
+      <div class="keyword-row">
+        <span class="kw-field">Instagram</span>
+        <span class="kw-words">instagram, insta, ig, handle, profile link</span>
+      </div>
+      <div class="keyword-row">
+        <span class="kw-field">Followers</span>
+        <span class="kw-words">follower, audience, reach, subscriber</span>
+      </div>
+      <div class="keyword-row">
+        <span class="kw-field">Niche</span>
+        <span class="kw-words">niche, category, content type, genre</span>
+      </div>
+      <div class="keyword-row">
+        <span class="kw-field">Media Kit</span>
+        <span class="kw-words">media kit, portfolio, kit link</span>
+      </div>
+    </div>
+    <p style="color: var(--muted); font-size: 11px; margin-top: 12px; line-height: 1.6;">
+      Tip: Works best on Google Forms. Open a form, then click "Autofill Form" below.
+    </p>
+  </div>
+
+  <!-- Persistent CTA -->
+  <div class="cta-panel">
+    <button class="btn-autofill" id="btn-autofill">⚡ Autofill Form</button>
+    <div id="fill-toast" class="toast"></div>
+    <p class="status-hint" id="status-hint">Navigate to a Google Form first</p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
